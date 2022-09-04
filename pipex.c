@@ -6,15 +6,15 @@
 /*   By: melkholy <melkholy@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/08/31 18:40:17 by melkholy          #+#    #+#             */
-/*   Updated: 2022/09/04 17:42:39 by melkholy         ###   ########.fr       */
+/*   Updated: 2022/09/04 18:36:27 by melkholy         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <unistd.h>
 #include <stdio.h>
 #include <sys/wait.h>
-#include <string.h>
 #include <stdlib.h>
+#include <fcntl.h>
 #include "../Libft/libft.h"
 
 char	*ft_add_path(char *cmd, char **path)
@@ -91,14 +91,24 @@ int	main(int argc, char *argv[], char *envp[])
 {
 	int		mypipe[2];
 	int		pip;
+	int		file;
+	int		file1;
 	int		fnum;
 	int		count;
 	char	**cmd;
 	char	**cmd1;
 
 	pip = pipe(mypipe);
-	cmd = ft_check_path(argv[1], envp);
-	cmd1 = ft_check_path(argv[2], envp);
+	if (access(argv[1], F_OK | R_OK))
+		perror("No such a command or you don't have permission");
+	else
+		file = open(argv[1], O_RDONLY);
+	if (access(argv[4], F_OK | R_OK))
+		perror("No such a command or you don't have permission");
+	else
+		file1 = open(argv[4], O_RDWR);
+	cmd = ft_check_path(argv[2], envp);
+	cmd1 = ft_check_path(argv[3], envp);
 	fnum = fork();
 
 	if (pip < 0)
@@ -108,6 +118,8 @@ int	main(int argc, char *argv[], char *envp[])
 	if (fnum == 0)
 	{
 		close(mypipe[0]);
+		dup2(file, 0);
+		close(file);
 		dup2(mypipe[1], 1);
 		close(mypipe[1]);
 		execve(cmd[0], cmd, envp);
@@ -120,9 +132,12 @@ int	main(int argc, char *argv[], char *envp[])
 			close(mypipe[1]);
 			dup2(mypipe[0], 0);
 			close(mypipe[0]);
+			dup2(file1, 1);
+			close(file1);
 			execve(cmd1[0], cmd1, NULL);
 		}
 	}
+	wait(NULL);
 	count = -1;
 	while (cmd[++count])
 		free(cmd[count]);
