@@ -6,11 +6,10 @@
 /*   By: melkholy <melkholy@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/08/31 18:40:17 by melkholy          #+#    #+#             */
-/*   Updated: 2022/09/04 13:43:42 by melkholy         ###   ########.fr       */
+/*   Updated: 2022/09/04 17:42:39 by melkholy         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include <sys/unistd.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <sys/wait.h>
@@ -32,6 +31,8 @@ char	*ft_add_path(char *cmd, char **path)
 			break ;
 		free(cmd_path);
 	}
+	if (access(cmd_path, F_OK | X_OK))
+		perror("No such a command or you don't have permission");
 	count = -1;
 	while (path[++count])
 		free(path[count]);
@@ -65,19 +66,39 @@ char	*ft_get_path(char *cmd, char *envp[])
 	return (ft_add_path(cmd, path));
 }
 
+char	**ft_check_path(char *cmd, char *envp[])
+{
+	char	**cmd_path;
+	char	*tmp;
+
+	if (ft_strchr(cmd, ' '))
+	{
+		cmd_path = ft_split(cmd, ' ');
+		tmp = ft_get_path(cmd_path[0], envp);
+		free(cmd_path[0]);
+		cmd_path[0] = tmp;
+	}
+	else
+	{
+		tmp = ft_get_path(cmd, envp);
+		cmd_path = ft_split(tmp, '\0');
+		free(tmp);
+	}
+	return (cmd_path);
+}
+
 int	main(int argc, char *argv[], char *envp[])
 {
 	int		mypipe[2];
 	int		pip;
 	int		fnum;
-	char	*cmd[2];
-	char	*cmd1[2];
+	int		count;
+	char	**cmd;
+	char	**cmd1;
 
 	pip = pipe(mypipe);
-	cmd[0] = ft_get_path(argv[1], envp);
-	cmd1[0] = ft_get_path(argv[2], envp);
-	cmd[1] = NULL;
-	cmd1[1] = NULL;
+	cmd = ft_check_path(argv[1], envp);
+	cmd1 = ft_check_path(argv[2], envp);
 	fnum = fork();
 
 	if (pip < 0)
@@ -102,7 +123,13 @@ int	main(int argc, char *argv[], char *envp[])
 			execve(cmd1[0], cmd1, NULL);
 		}
 	}
-	free(cmd[0]);
-	free(cmd1[0]);
+	count = -1;
+	while (cmd[++count])
+		free(cmd[count]);
+	count = -1;
+	while (cmd1[++count])
+		free(cmd1[count]);
+	free(cmd);
+	free(cmd1);
 	return (0);
 }
