@@ -6,145 +6,125 @@
 /*   By: melkholy <melkholy@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/08/31 18:40:17 by melkholy          #+#    #+#             */
-/*   Updated: 2022/09/04 18:36:27 by melkholy         ###   ########.fr       */
+/*   Updated: 2022/09/10 19:18:48 by melkholy         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include <unistd.h>
-#include <stdio.h>
-#include <sys/wait.h>
-#include <stdlib.h>
-#include <fcntl.h>
-#include "../Libft/libft.h"
+#include "pipex.h"
 
-char	*ft_add_path(char *cmd, char **path)
+void	ft_pipe_process(int num, char **cmds_path, char *envp[], int **pipes)
 {
-	int		count;
-	char	*cmd_path;
+	int	count;
 
 	count = -1;
-	cmd_path = NULL;
-	while (path[++count])
+	while (++count < 2)
 	{
-		cmd_path = ft_strjoin(path[count], cmd);
-		if (!access(cmd_path, F_OK | X_OK))
-			break ;
-		free(cmd_path);
+		if (num != count)
+			close(pipes[count][0]);
+		if (num + 1 != count)
+			close(pipes[count][1]);
 	}
-	if (access(cmd_path, F_OK | X_OK))
-		perror("No such a command or you don't have permission");
-	count = -1;
-	while (path[++count])
-		free(path[count]);
-	free(path);
-	return (cmd_path);
-}
-
-char	*ft_get_path(char *cmd, char *envp[])
-{
-	int		count;
-	char	*str;
-	char	**path;
-
-	count = -1;
-	str = NULL;
-	while (envp[++count])
-		if (ft_strnstr(envp[count], "PATH=", 5))
-			str = ft_strtrim(ft_strnstr(envp[count], "PATH=", 5), "PATH=");
-	if (str)	
-		path = ft_split(str, ':');
+	dup2(pipes[num][0], 0);
+	close(pipes[num][0]);
+	dup2(pipes[num + 1][1], 1);
+	close(pipes[num + 1][1]);
+	if (cmds_path)
+		execve(cmds_path[0], cmds_path, envp);
 	else
-		return (NULL);
-	free(str);
-	count = -1;
-	while (path[++count])
-	{
-		str = path[count];
-		path[count] = ft_strjoin(path[count], "/");
-		free(str);
-	}
-	return (ft_add_path(cmd, path));
+		return ;
 }
 
-char	**ft_check_path(char *cmd, char *envp[])
+int	ft_infile_fd(char *argv[], int **pipes)
 {
-	char	**cmd_path;
-	char	*tmp;
+	int	infile;
+	int	status;
 
-	if (ft_strchr(cmd, ' '))
+	infile = 0;
+	status = 0;
+	if (access(argv[1], F_OK | R_OK))
 	{
-		cmd_path = ft_split(cmd, ' ');
-		tmp = ft_get_path(cmd_path[0], envp);
-		free(cmd_path[0]);
-		cmd_path[0] = tmp;
+		if (access(argv[1], F_OK))
+			status = 1;
+		ft_printf("%s\n", strerror(errno));
 	}
 	else
 	{
-		tmp = ft_get_path(cmd, envp);
-		cmd_path = ft_split(tmp, '\0');
-		free(tmp);
+		infile = open(argv[1], O_RDONLY);
+		dup2(infile, pipes[0][0]);
+		close(infile);
 	}
-	return (cmd_path);
+	return (status);
+}
+
+void	ft_outfile_fd(char *argv[], int **pipes)
+{
+	int	outfile;
+
+	outfile = 0;
+	if (!access(argv[4], F_OK | W_OK))
+		outfile = open(argv[4], O_WRONLY | O_TRUNC);
+	else if (!access(argv[4], F_OK))
+	{
+		ft_printf("%s\n", strerror(errno));
+		ft_free_pipes(pipes);
+		exit(1);
+	}
+	else
+		outfile = open(argv[4], O_RDWR | O_CREAT | O_TRUNC, 0666);
+	dup2(outfile, pipes[0][1]);
+	close(outfile);
+}
+
+int	ft_fork_proc(char *argv[], char *envp[], int **pipefds, int *pid)
+{
+	char	**cmds_path;
+	int		count;
+	int		status;
+
+	count = -1;
+	status = 0;
+	while (++count < 2)
+	{
+		cmds_path = ft_check_path(argv[count + 2], envp);
+		pid[count] = fork();
+		if (count && pid[count] == 0)
+			ft_last_proc(count, cmds_path, envp, pipefds);
+		else if (pid[count] == 0)
+			ft_pipe_process(count, cmds_path, envp, pipefds);
+		else if (pid[count] < 0)
+			perror("Creating a new process failed");
+		if (cmds_path)
+			ft_free_pth(cmds_path);
+		else if (!cmds_path && count)
+			status = 1;
+	}
+	ft_close_pipes(pipefds, count);
+	return (status);
 }
 
 int	main(int argc, char *argv[], char *envp[])
 {
-	int		mypipe[2];
-	int		pip;
-	int		file;
-	int		file1;
-	int		fnum;
+	int		*pid;
+	int		**pipes;
 	int		count;
-	char	**cmd;
-	char	**cmd1;
+	int		procs;
+	int		status;
 
-	pip = pipe(mypipe);
-	if (access(argv[1], F_OK | R_OK))
-		perror("No such a command or you don't have permission");
-	else
-		file = open(argv[1], O_RDONLY);
-	if (access(argv[4], F_OK | R_OK))
-		perror("No such a command or you don't have permission");
-	else
-		file1 = open(argv[4], O_RDWR);
-	cmd = ft_check_path(argv[2], envp);
-	cmd1 = ft_check_path(argv[3], envp);
-	fnum = fork();
-
-	if (pip < 0)
-		perror("We have an error in Pipe");
-	if (fnum < 0)
-		perror("We have an error in fork");
-	if (fnum == 0)
-	{
-		close(mypipe[0]);
-		dup2(file, 0);
-		close(file);
-		dup2(mypipe[1], 1);
-		close(mypipe[1]);
-		execve(cmd[0], cmd, envp);
-	}
-	if (fnum > 0)
-	{
-		fnum = fork();
-		if (fnum == 0)
-		{
-			close(mypipe[1]);
-			dup2(mypipe[0], 0);
-			close(mypipe[0]);
-			dup2(file1, 1);
-			close(file1);
-			execve(cmd1[0], cmd1, NULL);
-		}
-	}
-	wait(NULL);
 	count = -1;
-	while (cmd[++count])
-		free(cmd[count]);
-	count = -1;
-	while (cmd1[++count])
-		free(cmd1[count]);
-	free(cmd);
-	free(cmd1);
-	return (0);
+	status = 0;
+	if (argc != 5)
+		exit(1);
+	procs = argc - 3;
+	pipes = ft_create_pipes(procs);
+	status = ft_infile_fd(argv, pipes);
+	ft_outfile_fd(argv, pipes);
+	pid = ft_create_pid(2);
+	if (ft_fork_proc(argv, envp, pipes, pid))
+		status = 127;
+	while (++count < procs)
+		waitpid(pid[count], NULL, 0);
+	ft_free_pipes(pipes);
+	unlink("./temp.txt");
+	free(pid);
+	return (status);
 }
