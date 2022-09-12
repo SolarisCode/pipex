@@ -6,7 +6,7 @@
 /*   By: melkholy <melkholy@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/10 17:32:48 by melkholy          #+#    #+#             */
-/*   Updated: 2022/09/10 17:34:28 by melkholy         ###   ########.fr       */
+/*   Updated: 2022/09/12 22:03:07 by melkholy         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,7 +44,7 @@ void	ft_here_doc(t_pipe *buff)
 char	**ft_check_doc(int index, t_pipe *buff)
 {
 	if (!ft_strncmp(buff->argv[1], "here_doc", 8))
-		return (ft_check_path(buff->argv[index + 3], buff->envp));
+		return (ft_check_path(buff->argv[index + 3], buff));
 	else
-		return (ft_check_path(buff->argv[index + 2], buff->envp));
+		return (ft_check_path(buff->argv[index + 2], buff));
 }

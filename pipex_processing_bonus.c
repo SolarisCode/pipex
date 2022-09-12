@@ -6,13 +6,13 @@
 /*   By: melkholy <melkholy@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/08 20:51:41 by melkholy          #+#    #+#             */
-/*   Updated: 2022/09/10 19:17:10 by melkholy         ###   ########.fr       */
+/*   Updated: 2022/09/12 23:58:11 by melkholy         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "pipex_bonus.h"
 
-char	*ft_add_path(char *cmd, char **path)
+char	*ft_add_path(char *cmd, char **path, char *shell)
 {
 	int		count;
 	char	*cmd_path;
@@ -33,13 +33,13 @@ char	*ft_add_path(char *cmd, char **path)
 	free(path);
 	if (!cmd_path)
 	{
-		ft_printf("command not found\n");
+		ft_printf("%s: command not found: %s\n", shell, cmd);
 		return (NULL);
 	}
 	return (cmd_path);
 }
 
-char	*ft_get_path(char *cmd, char *envp[])
+char	*ft_get_path(char *cmd, t_pipe *buff)
 {
 	int		count;
 	char	*str;
@@ -47,9 +47,10 @@ char	*ft_get_path(char *cmd, char *envp[])
 
 	count = -1;
 	str = NULL;
-	while (envp[++count])
-		if (ft_strnstr(envp[count], "PATH=", 5))
-			str = ft_strtrim(ft_strnstr(envp[count], "PATH=", 5), "PATH=");
+	while (buff->envp[++count])
+		if (ft_strnstr(buff->envp[count], "PATH=", 5))
+			str = ft_strtrim(ft_strnstr(buff->envp[count], "PATH=", 5), \
+					"PATH=");
 	if (str)
 		path = ft_split(str, ':');
 	else
@@ -63,10 +64,10 @@ char	*ft_get_path(char *cmd, char *envp[])
 		path[count] = ft_strjoin(path[count], "/");
 		free(str);
 	}
-	return (ft_add_path(cmd, path));
+	return (ft_add_path(cmd, path, buff->sh));
 }
 
-char	**ft_check_path(char *cmd, char *envp[])
+char	**ft_check_path(char *cmd, t_pipe *buff)
 {
 	char	**cmd_path;
 	char	*tmp;
@@ -77,13 +78,13 @@ char	**ft_check_path(char *cmd, char *envp[])
 		cmd = ft_found_q(cmd, &str);
 	if (ft_strchr(cmd, ' '))
 	{
-		cmd_path = ft_cmd_space(cmd, envp, str);
+		cmd_path = ft_cmd_space(cmd, buff, str);
 		if (str)
 			ft_single_q(str, cmd_path);
 	}
 	else
 	{
-		tmp = ft_get_path(cmd, envp);
+		tmp = ft_get_path(cmd, buff);
 		cmd_path = ft_split(tmp, '\0');
 		free(tmp);
 		if (str)

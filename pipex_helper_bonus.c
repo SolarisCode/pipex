@@ -6,19 +6,19 @@
 /*   By: melkholy <melkholy@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/10 15:34:17 by melkholy          #+#    #+#             */
-/*   Updated: 2022/09/10 19:25:30 by melkholy         ###   ########.fr       */
+/*   Updated: 2022/09/12 22:15:40 by melkholy         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "pipex_bonus.h"
 
-char	**ft_cmd_space(char *cmd, char *envp[], char *str)
+char	**ft_cmd_space(char *cmd, t_pipe *buff, char *str)
 {
 	char	**cmd_path;
 	char	*tmp;
 
 	cmd_path = ft_split(cmd, ' ');
-	tmp = ft_get_path(cmd_path[0], envp);
+	tmp = ft_get_path(cmd_path[0], buff);
 	if (tmp)
 	{
 		free(cmd_path[0]);

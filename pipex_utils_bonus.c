@@ -6,7 +6,7 @@
 /*   By: melkholy <melkholy@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/08 20:54:52 by melkholy          #+#    #+#             */
-/*   Updated: 2022/09/10 18:19:26 by melkholy         ###   ########.fr       */
+/*   Updated: 2022/09/12 21:51:32 by melkholy         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,7 +23,7 @@ int	ft_infile_fd(t_pipe *buff)
 	{
 		if (access(buff->argv[1], F_OK))
 			status = 1;
-		ft_printf("%s\n", strerror(errno));
+		ft_printf("%s: %s: %s\n", buff->sh, strerror(errno), buff->argv[1]);
 	}
 	else
 	{
@@ -45,7 +45,8 @@ void	ft_outfile_fd(t_pipe *buff)
 		outfile = open(buff->argv[argc - 1], O_WRONLY | O_TRUNC);
 	else if (!access(buff->argv[argc - 1], F_OK))
 	{
-		ft_printf("%s\n", strerror(errno));
+		ft_printf("%s: %s: %s\n", \
+				buff->sh, strerror(errno), buff->argv[argc - 1]);
 		ft_free_pipes(buff->pipefd, buff->procs);
 		free(buff);
 		exit(1);

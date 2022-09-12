@@ -6,7 +6,7 @@
 /*   By: melkholy <melkholy@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/08/31 18:40:17 by melkholy          #+#    #+#             */
-/*   Updated: 2022/09/10 18:19:05 by melkholy         ###   ########.fr       */
+/*   Updated: 2022/09/12 22:49:48 by melkholy         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -63,11 +63,20 @@ int	ft_fork_proc(t_pipe *buff)
 t_pipe	*ft_set_buff(int argc, char **argv, char **envp)
 {
 	t_pipe	*buff;
+	int		count;
+	char	*str;
 
+	str = NULL;
+	count = 0;
 	buff = (t_pipe *)ft_calloc(1, sizeof(t_pipe));
 	buff->argc = argc;
 	buff->argv = argv;
 	buff->envp = envp;
+	while (envp[++count])
+		if (ft_strnstr(envp[count], "SHELL=", 6))
+			str = ft_strtrim(ft_strnstr(envp[count], "SHELL=", 6), "SHELL=");
+	buff->sh = ft_strdup(ft_strrchr(str, '/') + 1);
+	free(str);
 	if (!ft_strncmp(argv[1], "here_doc", 8))
 		buff->procs = argc - 4;
 	else
@@ -97,6 +106,7 @@ int	main(int argc, char *argv[], char *envp[])
 		waitpid(buff->pid[count], NULL, 0);
 	ft_free_pipes(buff->pipefd, buff->procs);
 	free(buff->pid);
+	free(buff->sh);
 	free(buff);
 	return (status);
 }

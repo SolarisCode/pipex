@@ -6,7 +6,7 @@
 /*   By: melkholy <melkholy@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/08 20:21:26 by melkholy          #+#    #+#             */
-/*   Updated: 2022/09/10 19:19:45 by melkholy         ###   ########.fr       */
+/*   Updated: 2022/09/12 23:47:18 by melkholy         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,7 +33,7 @@ char	*ft_add_path(char *cmd, char **path)
 	free(path);
 	if (!cmd_path)
 	{
-		ft_printf("command not found\n");
+		ft_printf("command not found: %s\n", cmd);
 		return (NULL);
 	}
 	return (cmd_path);
@@ -130,8 +130,5 @@ void	ft_last_proc(int num, char **cmds_path, char *envp[], int **pipes)
 	close(pipes[num][0]);
 	dup2(pipes[0][1], 1);
 	close(pipes[0][1]);
-	if (cmds_path)
-		execve(cmds_path[0], cmds_path, envp);
-	else
-		return ;
+	execve(cmds_path[0], cmds_path, envp);
 }
