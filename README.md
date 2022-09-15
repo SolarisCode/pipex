@@ -14,6 +14,9 @@ cat /etc/passwd | wc -l > output.txt
 ```
 I asked myself the same question and I decided to make a program to mimic the pipe `|`
 and the redirection `>` operation.
+I found out it's not that simple to implement such a feature to a program, it involves 
+`pipes` obvisuly and I had to work with processes on a system level using `fork()`, `waitpid()`
+and `execve()`, but it was a fun project and I have learnt a lot form it.
 
 |Program name|pipex|
 |:----------:|:----|
