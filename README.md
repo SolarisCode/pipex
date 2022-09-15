@@ -59,4 +59,5 @@ Just like in the termial:
 cmd << LIMITER | cmd1 >> file
 ```
 >While the `LIMITER` is the word of your choice to end the input for the standard input.
+
 Feel free to contact me if you have a better way to implement any of these functionalities :)
