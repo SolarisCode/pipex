@@ -1,6 +1,6 @@
 # pipex
 
-I guess it's to say most of us used the pipe `|` character in the termial
+I guess it's save to say most of us used the pipe `|` character in the termial
 to perform an operation between two command like `cat` and `wc`
 ```shell
 cat /etc/passwd | wc -l
