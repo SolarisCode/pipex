@@ -6,7 +6,7 @@
 /*   By: melkholy <melkholy@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/08/31 18:40:17 by melkholy          #+#    #+#             */
-/*   Updated: 2022/09/12 22:49:48 by melkholy         ###   ########.fr       */
+/*   Updated: 2022/12/03 18:57:05 by melkholy         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,12 +14,8 @@
 
 int	ft_files_fd(t_pipe *buff)
 {
-	int	infile;
-	int	outfile;
 	int	status;
 
-	infile = 0;
-	outfile = 0;
 	status = 0;
 	if (!ft_strncmp(buff->argv[1], "here_doc", 8))
 	{
